@@ -86,4 +86,23 @@ class CrawlscopeSchemaRegistryTest < Minitest::Test
 
     assert_equal "Unknown Crawlscope rules: unknown", error.message
   end
+
+  def test_validate_accepts_arrays_graphs_unknown_types_and_non_hashes
+    registry = Crawlscope::SchemaRegistry.default
+
+    errors = registry.validate(
+      [
+        "ignored",
+        {"@type" => "UnknownThing"},
+        {
+          "@graph" => [
+            {"@type" => "Article"},
+            {"@type" => "WebSite", "name" => "Example"}
+          ]
+        }
+      ]
+    )
+
+    assert_equal ["Article"], errors.map { |error| error[:type] }
+  end
 end

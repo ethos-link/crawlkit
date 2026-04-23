@@ -2,7 +2,7 @@
 
 require "test_helper"
 
-class CrawlscopeAuditTest < Minitest::Test
+class CrawlscopeCrawlTest < Minitest::Test
   def setup
     @tmp_dir = Dir.mktmpdir
     @sitemap_path = File.join(@tmp_dir, "sitemap.xml")
@@ -43,7 +43,7 @@ class CrawlscopeAuditTest < Minitest::Test
         HTML
       )
 
-    result = Crawlscope::Audit.new(
+    result = Crawlscope::Crawl.new(
       base_url: "https://example.com",
       sitemap_path: @sitemap_path,
       rules: Crawlscope::RuleRegistry.default(site_name: "Example").rules,
@@ -84,7 +84,7 @@ class CrawlscopeAuditTest < Minitest::Test
         HTML
       )
 
-    result = Crawlscope::Audit.new(
+    result = Crawlscope::Crawl.new(
       base_url: "https://example.com",
       sitemap_path: @sitemap_path,
       rules: Crawlscope::RuleRegistry.default(site_name: "Example").rules,
@@ -149,7 +149,7 @@ class CrawlscopeAuditTest < Minitest::Test
       end
     end.new
 
-    result = Crawlscope::Audit.new(
+    result = Crawlscope::Crawl.new(
       base_url: "https://example.com",
       sitemap_path: @sitemap_path,
       rules: Crawlscope::RuleRegistry.default(site_name: "Example").rules,

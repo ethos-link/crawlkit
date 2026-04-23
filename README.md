@@ -89,14 +89,14 @@ Child sitemap indexes are supported automatically.
 ```ruby
 require "crawlscope"
 
-audit = Crawlscope::Audit.new(
+crawl = Crawlscope::Crawl.new(
   base_url: "https://example.com",
   sitemap_path: "https://example.com/sitemap.xml",
   rules: Crawlscope::RuleRegistry.default(site_name: "Example").rules,
   schema_registry: Crawlscope::SchemaRegistry.default
 )
 
-result = audit.call
+result = crawl.call
 
 puts result.ok?
 puts result.issues.to_a.map(&:message)
@@ -104,7 +104,7 @@ puts result.issues.to_a.map(&:message)
 
 ## Result Shape
 
-`Crawlscope::Audit` returns a `Crawlscope::Result` with:
+`Crawlscope::Crawl` returns a `Crawlscope::Result` with:
 
 - `urls`: sitemap URLs selected for validation
 - `pages`: fetched page snapshots
@@ -236,6 +236,8 @@ Checks:
 - `SoftwareApplication`
 - `WebApplication`
 - `WebSite`
+
+The default schema definitions live in `Crawlscope::Schemas`; `Crawlscope::SchemaRegistry` owns registration and validation.
 
 Host apps can replace or extend the registry:
 

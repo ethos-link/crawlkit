@@ -109,7 +109,7 @@ module Crawlscope
 
       configure_renderer(options[:renderer])
 
-      result = task.validate_ldjson(
+      result = task.validate_json_ld(
         urls: urls,
         debug: options[:debug],
         renderer: options[:renderer],
@@ -239,7 +239,7 @@ module Crawlscope
     end
 
     def task
-      @task ||= Task.new(configuration: @configuration, reporter: Reporter.new(io: @out))
+      @task ||= Run.new(configuration: @configuration, reporter: Reporter.new(io: @out))
     end
   end
 end

@@ -74,7 +74,7 @@ module Crawlscope
         raise ConfigurationError, "Crawlscope sitemap_path is not configured"
       end
 
-      Audit.new(
+      Crawl.new(
         base_url: base_url,
         sitemap_path: sitemap_path,
         browser_factory: browser_factory,

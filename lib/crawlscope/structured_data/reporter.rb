@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "uri"
+require "json"
 
 module Crawlscope
   module StructuredData
@@ -19,6 +20,18 @@ module Crawlscope
         else
           report_failures(report)
         end
+      end
+
+      def details(result, debug:, renderer:)
+        @io.puts("JavaScript mode enabled (Ferrum)") if renderer == :browser
+        @io.puts("Validating JSON-LD on #{result.entries.size} URL(s)")
+        @io.puts("")
+
+        result.entries.each do |entry|
+          report_entry(entry, debug: debug)
+        end
+
+        @io.puts("STATUS: #{result.ok? ? "OK" : "FAILED"}")
       end
 
       private
@@ -67,6 +80,62 @@ module Crawlscope
         end
 
         @io.puts("#{report.failure_count} of #{report.total} URLs failed validation.")
+      end
+
+      def report_entry(entry, debug:)
+        @io.puts("=" * 80)
+        @io.puts("URL: #{entry.url}")
+        @io.puts("=" * 80)
+
+        if entry.fetch_error
+          @io.puts("Error: #{entry.fetch_error}")
+          @io.puts("")
+          return
+        end
+
+        report_status(entry)
+        @io.puts("Structured data found: #{entry.structured_items.size} (JSON-LD: #{entry.json_ld_count}, Microdata: #{entry.microdata_count})")
+        report_debug(entry) if debug && entry.structured_items.any?
+        report_validation(entry)
+        @io.puts("")
+      end
+
+      def report_status(entry)
+        if entry.status
+          @io.puts("Status: #{entry.status}")
+        else
+          @io.puts("Status: JS runtime fetch")
+        end
+      end
+
+      def report_debug(entry)
+        @io.puts("")
+        @io.puts("--- Detected Structured Data ---")
+
+        entry.structured_items.each_with_index do |item, index|
+          @io.puts("")
+          @io.puts("## Item #{index + 1} [#{item[:source]}]")
+          @io.puts(JSON.pretty_generate(item[:data]))
+        end
+
+        @io.puts("")
+        @io.puts("--- End ---")
+      end
+
+      def report_validation(entry)
+        @io.puts("")
+        @io.puts("Validation results:")
+
+        if entry.errors.empty?
+          @io.puts("  All valid!")
+        else
+          entry.errors.each do |error|
+            @io.puts("  #{error[:type]}: INVALID [#{error[:source]}]")
+            error[:errors].each do |validation_error|
+              @io.puts("    - field: #{validation_error[:field]}, issue: #{validation_error[:issue]}")
+            end
+          end
+        end
       end
     end
   end

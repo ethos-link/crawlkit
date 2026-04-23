@@ -42,4 +42,35 @@ class CrawlscopeConfigurationTest < Minitest::Test
 
     assert_equal "Crawlscope sitemap_path is not configured", error.message
   end
+
+  def test_defaults_are_normalized
+    config = Crawlscope::Configuration.new
+
+    assert_equal [200, 301, 302], config.allowed_statuses
+    assert_equal 10, config.concurrency
+    assert_equal 4, config.browser_concurrency
+    assert_equal 5, config.network_idle_timeout_seconds
+    assert_equal :http, config.renderer
+    assert_equal 20, config.timeout_seconds
+    assert_equal $stdout, config.output
+    assert config.scroll_page?
+  end
+
+  def test_configured_values_are_normalized
+    config = Crawlscope::Configuration.new
+    config.allowed_statuses = ["200", "404"]
+    config.concurrency = "2"
+    config.network_idle_timeout_seconds = "7"
+    config.renderer = "browser"
+    config.timeout_seconds = "9"
+    config.scroll_page = false
+
+    assert_equal [200, 404], config.allowed_statuses
+    assert_equal 2, config.concurrency
+    assert_equal 2, config.browser_concurrency
+    assert_equal 7, config.network_idle_timeout_seconds
+    assert_equal :browser, config.renderer
+    assert_equal 9, config.timeout_seconds
+    refute config.scroll_page?
+  end
 end

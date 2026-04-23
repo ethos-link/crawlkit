@@ -19,7 +19,7 @@ class CrawlscopeCliTest < Minitest::Test
   end
 
   class FakeTask
-    attr_reader :validate_arguments, :ldjson_arguments
+    attr_reader :validate_arguments, :json_ld_arguments
 
     def validate(base_url:, sitemap_path:, rule_names:)
       @validate_arguments = {
@@ -31,8 +31,8 @@ class CrawlscopeCliTest < Minitest::Test
       success_result
     end
 
-    def validate_ldjson(urls:, debug:, renderer:, report_path:, summary:, timeout_seconds:)
-      @ldjson_arguments = {
+    def validate_json_ld(urls:, debug:, renderer:, report_path:, summary:, timeout_seconds:)
+      @json_ld_arguments = {
         urls: urls,
         debug: debug,
         renderer: renderer,
@@ -48,6 +48,14 @@ class CrawlscopeCliTest < Minitest::Test
 
     def success_result
       Struct.new(:ok?).new(true)
+    end
+  end
+
+  class FailingTask < FakeTask
+    private
+
+    def success_result
+      Struct.new(:ok?).new(false)
     end
   end
 
@@ -125,10 +133,82 @@ class CrawlscopeCliTest < Minitest::Test
         summary: true,
         timeout_seconds: 20
       },
-      task.ldjson_arguments
+      task.json_ld_arguments
     )
     assert_same out, configuration.output
     assert_empty err.string
+  end
+
+  def test_validate_caps_default_browser_concurrency
+    configuration = FakeConfiguration.new
+    task = FakeTask.new
+    out = StringIO.new
+    err = StringIO.new
+
+    with_env("JS" => "1") do
+      status = Crawlscope::Cli.start(["validate", "--base-url", "https://example.com"], out: out, err: err, configuration: configuration, task: task)
+
+      assert_equal 0, status
+    end
+
+    assert_equal :browser, configuration.renderer
+    assert_equal 4, configuration.concurrency
+    assert_includes out.string, "Default JS concurrency capped at 4"
+  end
+
+  def test_ldjson_accepts_repeated_urls_and_options
+    configuration = FakeConfiguration.new
+    task = FakeTask.new
+    out = StringIO.new
+    err = StringIO.new
+
+    status = Crawlscope::Cli.start(
+      ["ldjson", "--url", "https://example.com/a", "--url", "https://example.com/b", "--renderer", "browser", "--timeout", "12", "--network-idle-timeout", "3", "--report-path", "report.json", "--debug", "--summary"],
+      out: out,
+      err: err,
+      configuration: configuration,
+      task: task
+    )
+
+    assert_equal 0, status
+    assert_equal(
+      {
+        urls: ["https://example.com/a", "https://example.com/b"],
+        debug: true,
+        renderer: :browser,
+        report_path: "report.json",
+        summary: true,
+        timeout_seconds: 12
+      },
+      task.json_ld_arguments
+    )
+    assert_equal 3, configuration.network_idle_timeout_seconds
+  end
+
+  def test_ldjson_requires_urls
+    out = StringIO.new
+    err = StringIO.new
+
+    status = Crawlscope::Cli.start(["ldjson"], out: out, err: err, configuration: FakeConfiguration.new, task: FakeTask.new)
+
+    assert_equal 1, status
+    assert_includes err.string, "Crawlscope URL is not configured"
+  end
+
+  def test_invalid_integer_option_returns_error
+    out = StringIO.new
+    err = StringIO.new
+
+    status = Crawlscope::Cli.start(["validate", "--timeout", "0"], out: out, err: err, configuration: FakeConfiguration.new, task: FakeTask.new)
+
+    assert_equal 1, status
+    assert_includes err.string, "timeout must be >= 1"
+  end
+
+  def test_failed_result_returns_failed_status
+    status = Crawlscope::Cli.start(["validate"], out: StringIO.new, err: StringIO.new, configuration: FakeConfiguration.new, task: FailingTask.new)
+
+    assert_equal 1, status
   end
 
   private
