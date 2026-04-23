@@ -35,7 +35,7 @@ jobs:
 
       - name: Verify version matches tag
         run: |
-          GEM_VERSION=$(ruby -r./lib/crawlkit/version -e "puts Crawlkit::VERSION")
+          GEM_VERSION=$(ruby -r./lib/crawlscope/version -e "puts Crawlscope::VERSION")
           TAG_VERSION="${{ steps.version.outputs.value }}"
           if [ "$GEM_VERSION" != "$TAG_VERSION" ]; then
             echo "Version mismatch: tag=$TAG_VERSION gem=$GEM_VERSION"
@@ -64,7 +64,7 @@ jobs:
         uses: rubygems/configure-rubygems-credentials@bc6dd217f8a4f919d6835fcfefd470ef821f5c44
 
       - name: Publish to RubyGems
-        run: gem push "pkg/crawlkit-${{ steps.version.outputs.value }}.gem"
+        run: gem push "pkg/crawlscope-${{ steps.version.outputs.value }}.gem"
 
       - name: Create GitHub release
         uses: softprops/action-gh-release@v2

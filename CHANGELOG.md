@@ -10,11 +10,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- add crawlkit release-ready audit gem
+- add crawlscope release-ready audit gem
 
 - add standalone validation commands
 
-- move default schema rules into crawlkit
+- move default schema rules into crawlscope
 
 
 

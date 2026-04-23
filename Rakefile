@@ -3,10 +3,10 @@
 require "bundler/gem_tasks"
 require "rake/testtask"
 require "standard/rake"
-require_relative "lib/crawlkit"
-require_relative "lib/crawlkit/version"
+require_relative "lib/crawlscope"
+require_relative "lib/crawlscope/version"
 
-VERSION_PATH = File.expand_path("lib/crawlkit/version.rb", __dir__)
+VERSION_PATH = File.expand_path("lib/crawlscope/version.rb", __dir__)
 VALID_RELEASE_TARGETS = %w[major minor patch].freeze
 
 Rake::TestTask.new(:test) do |task|
@@ -34,7 +34,7 @@ def release_version(target)
     raise ArgumentError, "Invalid release target #{target.inspect}. Use #{VALID_RELEASE_TARGETS.join(", ")} or X.Y.Z."
   end
 
-  major, minor, patch = Crawlkit::VERSION.split(".").map(&:to_i)
+  major, minor, patch = Crawlscope::VERSION.split(".").map(&:to_i)
 
   case target
   when "major"
@@ -52,7 +52,7 @@ def update_version_file(version)
     <<~RUBY
       # frozen_string_literal: true
 
-      module Crawlkit
+      module Crawlscope
         VERSION = "#{version}"
       end
     RUBY
@@ -82,13 +82,13 @@ namespace :release do
     abort "Release requires a clean working tree." unless clean_worktree?
 
     version = release_version(args[:target])
-    current = Crawlkit::VERSION
+    current = Crawlscope::VERSION
     abort "Release version #{version} is older than current version #{current}." if Gem::Version.new(version) < Gem::Version.new(current)
 
     update_changelog(version)
     update_version_file(version)
 
-    sh "git add CHANGELOG.md lib/crawlkit/version.rb"
+    sh "git add CHANGELOG.md lib/crawlscope/version.rb"
     sh %(git commit -m "chore(release): prepare v#{version}")
     sh %(git tag -a v#{version} -m "Release v#{version}")
     sh "git push origin #{branch}"
@@ -98,17 +98,17 @@ namespace :release do
   end
 end
 
-namespace :crawlkit do
-  desc "Validate sitemap URLs with the default Crawlkit rules. ENV: BASE_URL, SITEMAP, RULES, JS=1, TIMEOUT, NETWORK_IDLE_TIMEOUT, CONCURRENCY"
+namespace :crawlscope do
+  desc "Validate sitemap URLs with the default Crawlscope rules. ENV: BASE_URL, SITEMAP, RULES, JS=1, TIMEOUT, NETWORK_IDLE_TIMEOUT, CONCURRENCY"
   task :validate do
-    status = Crawlkit::Cli.start(["validate"], out: $stdout, err: $stderr)
+    status = Crawlscope::Cli.start(["validate"], out: $stdout, err: $stderr)
     exit(status) unless status.zero?
   end
 
   namespace :validate do
     desc "Validate JSON-LD on one or more URLs. ENV: URL (required, semicolon-separated), DEBUG=1, JS=1, TIMEOUT, NETWORK_IDLE_TIMEOUT, REPORT_PATH, SUMMARY=1"
     task :ldjson do
-      status = Crawlkit::Cli.start(["ldjson"], out: $stdout, err: $stderr)
+      status = Crawlscope::Cli.start(["ldjson"], out: $stdout, err: $stderr)
       exit(status) unless status.zero?
     end
 
@@ -116,7 +116,7 @@ namespace :crawlkit do
     task :metadata do
       original_rules = ENV["RULES"]
       ENV["RULES"] = "metadata"
-      status = Crawlkit::Cli.start(["validate"], out: $stdout, err: $stderr)
+      status = Crawlscope::Cli.start(["validate"], out: $stdout, err: $stderr)
       exit(status) unless status.zero?
     ensure
       ENV["RULES"] = original_rules
@@ -126,7 +126,7 @@ namespace :crawlkit do
     task :structured_data do
       original_rules = ENV["RULES"]
       ENV["RULES"] = "structured_data"
-      status = Crawlkit::Cli.start(["validate"], out: $stdout, err: $stderr)
+      status = Crawlscope::Cli.start(["validate"], out: $stdout, err: $stderr)
       exit(status) unless status.zero?
     ensure
       ENV["RULES"] = original_rules
@@ -136,7 +136,7 @@ namespace :crawlkit do
     task :uniqueness do
       original_rules = ENV["RULES"]
       ENV["RULES"] = "uniqueness"
-      status = Crawlkit::Cli.start(["validate"], out: $stdout, err: $stderr)
+      status = Crawlscope::Cli.start(["validate"], out: $stdout, err: $stderr)
       exit(status) unless status.zero?
     ensure
       ENV["RULES"] = original_rules
@@ -146,7 +146,7 @@ namespace :crawlkit do
     task :links do
       original_rules = ENV["RULES"]
       ENV["RULES"] = "links"
-      status = Crawlkit::Cli.start(["validate"], out: $stdout, err: $stderr)
+      status = Crawlscope::Cli.start(["validate"], out: $stdout, err: $stderr)
       exit(status) unless status.zero?
     ensure
       ENV["RULES"] = original_rules

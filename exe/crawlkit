@@ -1,6 +1,0 @@
-#!/usr/bin/env ruby
-# frozen_string_literal: true
-
-require "crawlkit"
-
-exit Crawlkit::Cli.start(ARGV)

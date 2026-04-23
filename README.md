@@ -1,9 +1,9 @@
-# Crawlkit
+# Crawlscope
 
-[![Gem Version](https://badge.fury.io/rb/crawlkit.svg)](https://badge.fury.io/rb/crawlkit)
-[![Ruby](https://github.com/ethos-link/crawlkit/actions/workflows/ruby.yml/badge.svg)](https://github.com/ethos-link/crawlkit/actions/workflows/ruby.yml)
+[![Gem Version](https://badge.fury.io/rb/crawlscope.svg)](https://badge.fury.io/rb/crawlscope)
+[![Ruby](https://github.com/ethos-link/crawlscope/actions/workflows/ruby.yml/badge.svg)](https://github.com/ethos-link/crawlscope/actions/workflows/ruby.yml)
 
-`crawlkit` is a small Ruby gem for sitemap-driven SEO validation.
+`crawlscope` is a small Ruby gem for sitemap-driven SEO validation.
 
 It is built by [Ethos Link](https://www.ethos-link.com) and used in production by [Reviato](https://www.reviato.com).
 
@@ -33,7 +33,7 @@ The default rule set includes:
 Add this line to your application's Gemfile:
 
 ```ruby
-gem "crawlkit"
+gem "crawlscope"
 ```
 
 And then execute:
@@ -45,7 +45,7 @@ bundle install
 Or install it directly:
 
 ```bash
-gem install crawlkit
+gem install crawlscope
 ```
 
 If you want browser rendering, also add:
@@ -54,30 +54,30 @@ If you want browser rendering, also add:
 gem "ferrum"
 ```
 
-`crawlkit` only loads Ferrum when you run in browser mode.
+`crawlscope` only loads Ferrum when you run in browser mode.
 
 ## CLI Usage
 
 Validate a site directly from the gem:
 
 ```bash
-crawlkit validate --base-url https://example.com
+crawlscope validate --base-url https://example.com
 ```
 
 Validate only specific rules:
 
 ```bash
-crawlkit validate --base-url https://example.com --rules metadata,links
+crawlscope validate --base-url https://example.com --rules metadata,links
 ```
 
 Validate structured data on one or more URLs:
 
 ```bash
-crawlkit ldjson --url https://example.com/article
-crawlkit ldjson --url https://example.com/a --url https://example.com/b --summary
+crawlscope ldjson --url https://example.com/article
+crawlscope ldjson --url https://example.com/a --url https://example.com/b --summary
 ```
 
-If you do not pass `--sitemap`, `crawlkit` defaults to:
+If you do not pass `--sitemap`, `crawlscope` defaults to:
 
 - `https://example.com/sitemap.xml` for real site URLs
 - `public/sitemap.xml` for localhost-style development URLs when that file exists
@@ -87,13 +87,13 @@ Child sitemap indexes are supported automatically.
 ## Ruby Usage
 
 ```ruby
-require "crawlkit"
+require "crawlscope"
 
-audit = Crawlkit::Audit.new(
+audit = Crawlscope::Audit.new(
   base_url: "https://example.com",
   sitemap_path: "https://example.com/sitemap.xml",
-  rules: Crawlkit::RuleRegistry.default(site_name: "Example").rules,
-  schema_registry: Crawlkit::SchemaRegistry.default
+  rules: Crawlscope::RuleRegistry.default(site_name: "Example").rules,
+  schema_registry: Crawlscope::SchemaRegistry.default
 )
 
 result = audit.call
@@ -104,7 +104,7 @@ puts result.issues.to_a.map(&:message)
 
 ## Result Shape
 
-`Crawlkit::Audit` returns a `Crawlkit::Result` with:
+`Crawlscope::Audit` returns a `Crawlscope::Result` with:
 
 - `urls`: sitemap URLs selected for validation
 - `pages`: fetched page snapshots
@@ -117,18 +117,18 @@ puts result.issues.to_a.map(&:message)
 In an initializer:
 
 ```ruby
-Crawlkit.configure do |config|
+Crawlscope.configure do |config|
   config.base_url = -> { "https://example.com" }
   config.sitemap_path = -> { Rails.public_path.join("sitemap.xml").to_s }
   config.site_name = "Example"
-  config.schema_registry = -> { Crawlkit::SchemaRegistry.default }
+  config.schema_registry = -> { Crawlscope::SchemaRegistry.default }
 end
 ```
 
 Then run:
 
 ```bash
-bin/rails crawlkit:validate
+bin/rails crawlscope:validate
 ```
 
 Available environment overrides:
@@ -144,20 +144,20 @@ Available environment overrides:
 Available tasks:
 
 ```bash
-bin/rails crawlkit:validate
-bin/rails crawlkit:validate:metadata
-bin/rails crawlkit:validate:structured_data
-bin/rails crawlkit:validate:uniqueness
-bin/rails crawlkit:validate:links
-bin/rails crawlkit:validate:ldjson URL=https://example.com/article
+bin/rails crawlscope:validate
+bin/rails crawlscope:validate:metadata
+bin/rails crawlscope:validate:structured_data
+bin/rails crawlscope:validate:uniqueness
+bin/rails crawlscope:validate:links
+bin/rails crawlscope:validate:ldjson URL=https://example.com/article
 ```
 
 The same validation surface is also available in the gem repository itself through plain `rake`:
 
 ```bash
-bundle exec rake crawlkit:validate BASE_URL=https://example.com
-bundle exec rake crawlkit:validate:metadata BASE_URL=https://example.com
-bundle exec rake crawlkit:validate:ldjson URL=https://example.com/article
+bundle exec rake crawlscope:validate BASE_URL=https://example.com
+bundle exec rake crawlscope:validate:metadata BASE_URL=https://example.com
+bundle exec rake crawlscope:validate:ldjson URL=https://example.com/article
 ```
 
 ### Structured Data URL Audit
@@ -165,9 +165,9 @@ bundle exec rake crawlkit:validate:ldjson URL=https://example.com/article
 For one-off structured-data checks:
 
 ```bash
-bin/rails crawlkit:validate:ldjson URL=https://example.com/article
-bin/rails crawlkit:validate:ldjson URL='https://example.com/a;https://example.com/b' SUMMARY=1
-bin/rails crawlkit:validate:ldjson URL=https://example.com/article REPORT_PATH=tmp/structured-data.json
+bin/rails crawlscope:validate:ldjson URL=https://example.com/article
+bin/rails crawlscope:validate:ldjson URL='https://example.com/a;https://example.com/b' SUMMARY=1
+bin/rails crawlscope:validate:ldjson URL=https://example.com/article REPORT_PATH=tmp/structured-data.json
 ```
 
 Optional flags:
@@ -206,7 +206,7 @@ Checks:
 - malformed JSON-LD
 - missing required fields for supported schema types
 - schema validation failures from the configured registry
-- direct URL structured-data audits through `crawlkit:validate:ldjson`
+- direct URL structured-data audits through `crawlscope:validate:ldjson`
 
 ### Uniqueness
 
@@ -226,7 +226,7 @@ Checks:
 
 ## Schema Registry
 
-`crawlkit` ships with a default schema registry for common types such as:
+`crawlscope` ships with a default schema registry for common types such as:
 
 - `Article`
 - `FAQPage`
@@ -240,18 +240,18 @@ Checks:
 Host apps can replace or extend the registry:
 
 ```ruby
-Crawlkit.configure do |config|
+Crawlscope.configure do |config|
   config.schema_registry = -> { MyApp::StructuredData::SchemaRegistry.new }
 end
 ```
 
-That makes `crawlkit` useful as the audit engine while the app remains the owner of stricter product-specific schema rules.
+That makes `crawlscope` useful as the audit engine while the app remains the owner of stricter product-specific schema rules.
 
 ## Development
 
 ```bash
-git clone https://github.com/ethos-link/crawlkit.git
-cd crawlkit
+git clone https://github.com/ethos-link/crawlscope.git
+cd crawlscope
 
 bundle install
 bundle exec rake test
@@ -295,7 +295,7 @@ bundle exec rake 'release:prepare[0.1.0]'
 The task will:
 
 1. Regenerate `CHANGELOG.md` with `git-cliff`.
-1. Update `lib/crawlkit/version.rb`.
+1. Update `lib/crawlscope/version.rb`.
 1. Commit the release changes.
 1. Create and push the `vX.Y.Z` tag.
 
