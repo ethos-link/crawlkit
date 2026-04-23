@@ -36,4 +36,12 @@ class CrawlkitSchemaRegistryTest < Minitest::Test
     assert_equal "Article", errors.first[:type]
     assert_includes errors.first[:issue], "headline"
   end
+
+  def test_rule_registry_raises_for_unknown_rules
+    error = assert_raises(Crawlkit::ConfigurationError) do
+      Crawlkit::RuleRegistry.default.rules_for("metadata,unknown")
+    end
+
+    assert_equal "Unknown Crawlkit rules: unknown", error.message
+  end
 end
