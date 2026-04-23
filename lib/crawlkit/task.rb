@@ -10,9 +10,10 @@ module Crawlkit
     end
 
     def validate(base_url: nil, sitemap_path: nil, rule_names: nil)
+      resolved_base_url = base_url || default_base_url
       audit = @configuration.audit(
-        base_url: base_url || default_base_url,
-        sitemap_path: sitemap_path || default_sitemap_path,
+        base_url: resolved_base_url,
+        sitemap_path: sitemap_path || default_sitemap_path(base_url: resolved_base_url),
         rule_names: rule_names
       )
 
@@ -32,7 +33,7 @@ module Crawlkit
       )
       result = audit.call(urls: urls)
 
-      report_ldjson_result(result, debug: debug)
+      report_ldjson_result(result, debug: debug, renderer: renderer)
       StructuredData::Writer.new(path: report_path).write(result) if report_path
       StructuredData::Reporter.new(io: @configuration.output, report_path: report_path).report(result) if summary
       result
@@ -47,18 +48,27 @@ module Crawlkit
       "http://localhost:3000"
     end
 
-    def default_sitemap_path
+    def default_sitemap_path(base_url:)
       value = @configuration.sitemap_path
       return value unless value.to_s.strip.empty?
 
       local_path = File.expand_path("public/sitemap.xml", Dir.pwd)
-      return local_path if File.exist?(local_path)
+      if local_path_default?(base_url: base_url) && File.exist?(local_path)
+        return local_path
+      end
 
-      raise ConfigurationError, "Crawlkit sitemap_path is not configured"
+      "#{base_url.to_s.chomp("/")}/sitemap.xml"
     end
 
-    def report_ldjson_result(result, debug:)
-      if @configuration.renderer == :browser
+    def local_path_default?(base_url:)
+      host = URI.parse(base_url.to_s).host.to_s
+      ["localhost", "127.0.0.1"].include?(host)
+    rescue URI::InvalidURIError
+      false
+    end
+
+    def report_ldjson_result(result, debug:, renderer:)
+      if renderer == :browser
         @configuration.output.puts("JavaScript mode enabled (Ferrum)")
       end
 

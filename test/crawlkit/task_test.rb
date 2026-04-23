@@ -28,10 +28,12 @@ class CrawlkitTaskTest < Minitest::Test
   end
 
   class FakeConfiguration
-    attr_reader :received_arguments
+    attr_reader :base_url, :received_arguments, :sitemap_path
 
-    def initialize(result:)
+    def initialize(result:, base_url: "https://example.com", sitemap_path: "/tmp/sitemap.xml")
       @result = result
+      @base_url = base_url
+      @sitemap_path = sitemap_path
     end
 
     def audit(base_url:, sitemap_path:, rule_names:)
@@ -42,14 +44,6 @@ class CrawlkitTaskTest < Minitest::Test
       }
 
       FakeAudit.new(result: @result)
-    end
-
-    def base_url
-      "https://example.com"
-    end
-
-    def sitemap_path
-      "/tmp/sitemap.xml"
     end
   end
 
@@ -121,6 +115,48 @@ class CrawlkitTaskTest < Minitest::Test
     )
     assert_same result, reporter.result
     assert_same result, returned_result
+  end
+
+  def test_validate_defaults_to_base_url_sitemap_when_not_configured
+    result = FakeResult.new(reported: true)
+    configuration = FakeConfiguration.new(result: result, base_url: "https://example.com", sitemap_path: nil)
+    reporter = FakeReporter.new
+
+    Crawlkit::Task.new(configuration: configuration, reporter: reporter).validate
+
+    assert_equal(
+      {
+        base_url: "https://example.com",
+        sitemap_path: "https://example.com/sitemap.xml",
+        rule_names: nil
+      },
+      configuration.received_arguments
+    )
+  end
+
+  def test_validate_prefers_local_sitemap_for_localhost
+    result = FakeResult.new(reported: true)
+    configuration = FakeConfiguration.new(result: result, base_url: "http://localhost:3000", sitemap_path: nil)
+    reporter = FakeReporter.new
+    tmp_dir = Dir.mktmpdir
+    sitemap_path = File.join(tmp_dir, "public", "sitemap.xml")
+    FileUtils.mkdir_p(File.dirname(sitemap_path))
+    File.write(sitemap_path, "<urlset></urlset>")
+
+    Dir.chdir(tmp_dir) do
+      Crawlkit::Task.new(configuration: configuration, reporter: reporter).validate
+    end
+
+    assert_equal(
+      {
+        base_url: "http://localhost:3000",
+        sitemap_path: sitemap_path,
+        rule_names: nil
+      },
+      configuration.received_arguments
+    )
+  ensure
+    FileUtils.rm_rf(tmp_dir) if tmp_dir
   end
 
   def test_validate_ldjson_uses_real_audit_and_writes_report

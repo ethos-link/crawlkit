@@ -13,6 +13,12 @@ It is designed for Rails apps and plain Ruby scripts that want:
 - first-party rake tasks instead of a large DSL
 - optional browser rendering for JavaScript-heavy pages
 
+It works in three modes:
+
+- as a plain Ruby library
+- as a standalone CLI
+- as Rails rake tasks through the included Railtie
+
 The default rule set includes:
 
 - metadata validation
@@ -47,6 +53,34 @@ gem "ferrum"
 ```
 
 `crawlkit` only loads Ferrum when you run in browser mode.
+
+## CLI Usage
+
+Validate a site directly from the gem:
+
+```bash
+crawlkit validate --base-url https://example.com
+```
+
+Validate only specific rules:
+
+```bash
+crawlkit validate --base-url https://example.com --rules metadata,links
+```
+
+Validate structured data on one or more URLs:
+
+```bash
+crawlkit ldjson --url https://example.com/article
+crawlkit ldjson --url https://example.com/a --url https://example.com/b --summary
+```
+
+If you do not pass `--sitemap`, `crawlkit` defaults to:
+
+- `https://example.com/sitemap.xml` for real site URLs
+- `public/sitemap.xml` for localhost-style development URLs when that file exists
+
+Child sitemap indexes are supported automatically.
 
 ## Ruby Usage
 
@@ -114,6 +148,14 @@ bin/rails crawlkit:validate:structured_data
 bin/rails crawlkit:validate:uniqueness
 bin/rails crawlkit:validate:links
 bin/rails crawlkit:validate:ldjson URL=https://example.com/article
+```
+
+The same validation surface is also available in the gem repository itself through plain `rake`:
+
+```bash
+bundle exec rake crawlkit:validate BASE_URL=https://example.com
+bundle exec rake crawlkit:validate:metadata BASE_URL=https://example.com
+bundle exec rake crawlkit:validate:ldjson URL=https://example.com/article
 ```
 
 ### Structured Data URL Audit

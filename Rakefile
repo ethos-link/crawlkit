@@ -3,6 +3,7 @@
 require "bundler/gem_tasks"
 require "rake/testtask"
 require "standard/rake"
+require_relative "lib/crawlkit"
 require_relative "lib/crawlkit/version"
 
 VERSION_PATH = File.expand_path("lib/crawlkit/version.rb", __dir__)
@@ -94,6 +95,62 @@ namespace :release do
     sh "git push origin v#{version}"
   rescue ArgumentError, RuntimeError => e
     abort e.message
+  end
+end
+
+namespace :crawlkit do
+  desc "Validate sitemap URLs with the default Crawlkit rules. ENV: BASE_URL, SITEMAP, RULES, JS=1, TIMEOUT, NETWORK_IDLE_TIMEOUT, CONCURRENCY"
+  task :validate do
+    status = Crawlkit::Cli.start(["validate"], out: $stdout, err: $stderr)
+    exit(status) unless status.zero?
+  end
+
+  namespace :validate do
+    desc "Validate JSON-LD on one or more URLs. ENV: URL (required, semicolon-separated), DEBUG=1, JS=1, TIMEOUT, NETWORK_IDLE_TIMEOUT, REPORT_PATH, SUMMARY=1"
+    task :ldjson do
+      status = Crawlkit::Cli.start(["ldjson"], out: $stdout, err: $stderr)
+      exit(status) unless status.zero?
+    end
+
+    desc "Validate sitemap URLs with the metadata rule. ENV: BASE_URL, SITEMAP, JS=1"
+    task :metadata do
+      original_rules = ENV["RULES"]
+      ENV["RULES"] = "metadata"
+      status = Crawlkit::Cli.start(["validate"], out: $stdout, err: $stderr)
+      exit(status) unless status.zero?
+    ensure
+      ENV["RULES"] = original_rules
+    end
+
+    desc "Validate sitemap URLs with the structured_data rule. ENV: BASE_URL, SITEMAP, JS=1"
+    task :structured_data do
+      original_rules = ENV["RULES"]
+      ENV["RULES"] = "structured_data"
+      status = Crawlkit::Cli.start(["validate"], out: $stdout, err: $stderr)
+      exit(status) unless status.zero?
+    ensure
+      ENV["RULES"] = original_rules
+    end
+
+    desc "Validate sitemap URLs with the uniqueness rule. ENV: BASE_URL, SITEMAP, JS=1"
+    task :uniqueness do
+      original_rules = ENV["RULES"]
+      ENV["RULES"] = "uniqueness"
+      status = Crawlkit::Cli.start(["validate"], out: $stdout, err: $stderr)
+      exit(status) unless status.zero?
+    ensure
+      ENV["RULES"] = original_rules
+    end
+
+    desc "Validate sitemap URLs with the links rule. ENV: BASE_URL, SITEMAP, JS=1"
+    task :links do
+      original_rules = ENV["RULES"]
+      ENV["RULES"] = "links"
+      status = Crawlkit::Cli.start(["validate"], out: $stdout, err: $stderr)
+      exit(status) unless status.zero?
+    ensure
+      ENV["RULES"] = original_rules
+    end
   end
 end
 

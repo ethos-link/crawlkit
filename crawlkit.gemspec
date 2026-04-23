@@ -30,7 +30,7 @@ Gem::Specification.new do |spec|
   }
 
   spec.files = Dir.chdir(File.expand_path(__dir__)) do
-    allowed_prefixes = %w[lib/ test/].freeze
+    allowed_prefixes = %w[exe/ lib/ test/].freeze
     allowed_files = %w[CHANGELOG.md LICENSE.txt README.md].freeze
     git_files = `git ls-files -z 2>/dev/null`.split("\x0")
     candidate_files = git_files.empty? ? Dir.glob("{lib,test}/**/*", File::FNM_DOTMATCH) + allowed_files : git_files
@@ -41,6 +41,8 @@ Gem::Specification.new do |spec|
       allowed_files.include?(file) || allowed_prefixes.any? { |prefix| file.start_with?(prefix) }
     end.uniq
   end
+  spec.bindir = "exe"
+  spec.executables = ["crawlkit"]
   spec.require_paths = ["lib"]
 
   spec.add_dependency "concurrent-ruby", ">= 1.3"
