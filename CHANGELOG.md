@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.2.0] - 2026-04-24
 
+- refactor: improve architecture and documentation
 
 ### Changed
 
@@ -14,14 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - harden validation boundaries
 
-
-
-
 ### Fixed
 
 - handle child sitemaps
 
 - use URL for sitemap validation
-
-
-
