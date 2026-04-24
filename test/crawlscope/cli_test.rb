@@ -59,6 +59,12 @@ class CrawlscopeCliTest < Minitest::Test
     end
   end
 
+  class InvalidTask < FakeTask
+    def validate(base_url:, sitemap_path:, rule_names:)
+      raise Crawlscope::ValidationError, "No URLs found in sitemap: #{sitemap_path}"
+    end
+  end
+
   def test_version_prints_current_version
     out = StringIO.new
     err = StringIO.new
@@ -78,7 +84,7 @@ class CrawlscopeCliTest < Minitest::Test
 
     assert_equal 1, status
     assert_includes err.string, "Unknown command: unknown"
-    assert_includes err.string, "crawlscope validate --base-url"
+    assert_includes err.string, "crawlscope validate --url"
   end
 
   def test_validate_passes_arguments_to_task
@@ -88,7 +94,7 @@ class CrawlscopeCliTest < Minitest::Test
     err = StringIO.new
 
     status = Crawlscope::Cli.start(
-      ["validate", "--base-url", "https://example.com", "--sitemap", "https://example.com/sitemap-pages.xml", "--rules", "metadata,links", "--renderer", "browser", "--timeout", "30", "--network-idle-timeout", "9", "--concurrency", "3"],
+      ["validate", "--url", "https://example.com", "--sitemap", "https://example.com/sitemap-pages.xml", "--rules", "metadata,links", "--renderer", "browser", "--timeout", "30", "--network-idle-timeout", "9", "--concurrency", "3"],
       out: out,
       err: err,
       configuration: configuration,
@@ -146,7 +152,7 @@ class CrawlscopeCliTest < Minitest::Test
     err = StringIO.new
 
     with_env("JS" => "1") do
-      status = Crawlscope::Cli.start(["validate", "--base-url", "https://example.com"], out: out, err: err, configuration: configuration, task: task)
+      status = Crawlscope::Cli.start(["validate", "--url", "https://example.com"], out: out, err: err, configuration: configuration, task: task)
 
       assert_equal 0, status
     end
@@ -154,6 +160,33 @@ class CrawlscopeCliTest < Minitest::Test
     assert_equal :browser, configuration.renderer
     assert_equal 4, configuration.concurrency
     assert_includes out.string, "Default JS concurrency capped at 4"
+  end
+
+  def test_validate_uses_url_environment_as_base_url_for_default_sitemap
+    configuration = FakeConfiguration.new
+    task = FakeTask.new
+
+    with_env("URL" => "https://example.com") do
+      status = Crawlscope::Cli.start(["validate"], out: StringIO.new, err: StringIO.new, configuration: configuration, task: task)
+
+      assert_equal 0, status
+    end
+
+    assert_equal "https://example.com", task.validate_arguments[:base_url]
+    assert_nil task.validate_arguments[:sitemap_path]
+  end
+
+  def test_validate_uses_sitemap_mode_when_sitemap_is_configured
+    task = FakeTask.new
+
+    with_env("URL" => "https://example.com", "SITEMAP" => "https://example.com/sitemap.xml") do
+      status = Crawlscope::Cli.start(["validate"], out: StringIO.new, err: StringIO.new, configuration: FakeConfiguration.new, task: task)
+
+      assert_equal 0, status
+    end
+
+    assert_equal "https://example.com", task.validate_arguments[:base_url]
+    assert_equal "https://example.com/sitemap.xml", task.validate_arguments[:sitemap_path]
   end
 
   def test_ldjson_accepts_repeated_urls_and_options
@@ -209,6 +242,15 @@ class CrawlscopeCliTest < Minitest::Test
     status = Crawlscope::Cli.start(["validate"], out: StringIO.new, err: StringIO.new, configuration: FakeConfiguration.new, task: FailingTask.new)
 
     assert_equal 1, status
+  end
+
+  def test_validation_errors_return_failed_status_without_reraising
+    err = StringIO.new
+
+    status = Crawlscope::Cli.start(["validate"], out: StringIO.new, err: err, configuration: FakeConfiguration.new, task: InvalidTask.new)
+
+    assert_equal 1, status
+    assert_includes err.string, "No URLs found in sitemap"
   end
 
   private

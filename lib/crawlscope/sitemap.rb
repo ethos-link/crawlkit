@@ -28,7 +28,7 @@ module Crawlscope
 
       if root_name == "sitemapindex"
         document.xpath("//xmlns:sitemap/xmlns:loc", SITEMAP_NAMESPACE).flat_map do |node|
-          child_source = resolve_child_source(source, node.text.to_s.strip)
+          child_source = resolve_child_source(source, node.text.to_s.strip, base_url: base_url)
           collect_urls(child_source, base_url: base_url, visited: visited)
         end
       else
@@ -46,9 +46,9 @@ module Crawlscope
       end
     end
 
-    def resolve_child_source(parent_source, child_loc)
+    def resolve_child_source(parent_source, child_loc, base_url:)
       if Url.remote?(parent_source)
-        URI.join(parent_source, child_loc).to_s
+        Url.normalize_for_base(URI.join(parent_source, child_loc).to_s, base_url: base_url)
       elsif (local_child_path = local_child_path(parent_source, child_loc))
         local_child_path
       elsif Url.remote?(child_loc)

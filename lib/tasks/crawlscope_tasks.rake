@@ -1,5 +1,5 @@
 namespace :crawlscope do
-  desc "Validate sitemap URLs with the default Crawlscope rules. ENV: BASE_URL, SITEMAP, RULES, JS=1, TIMEOUT, NETWORK_IDLE_TIMEOUT, CONCURRENCY"
+  desc "Validate URLs with the default Crawlscope rules. ENV: URL, SITEMAP, RULES, JS=1, TIMEOUT, NETWORK_IDLE_TIMEOUT, CONCURRENCY"
   task validate: :environment do
     status = Crawlscope::Cli.start(["validate"], out: $stdout, err: $stderr)
     exit(status) unless status.zero?
@@ -12,22 +12,22 @@ namespace :crawlscope do
       exit(status) unless status.zero?
     end
 
-    desc "Validate sitemap URLs with the metadata rule. ENV: BASE_URL, SITEMAP, JS=1"
+    desc "Validate URLs with the metadata rule. ENV: URL, SITEMAP, JS=1"
     task metadata: :environment do
       crawlscope_task_with_rules("metadata")
     end
 
-    desc "Validate sitemap URLs with the structured_data rule. ENV: BASE_URL, SITEMAP, JS=1"
+    desc "Validate URLs with the structured_data rule. ENV: URL, SITEMAP, JS=1"
     task structured_data: :environment do
       crawlscope_task_with_rules("structured_data")
     end
 
-    desc "Validate sitemap URLs with the uniqueness rule. ENV: BASE_URL, SITEMAP, JS=1"
+    desc "Validate URLs with the uniqueness rule. ENV: URL, SITEMAP, JS=1"
     task uniqueness: :environment do
       crawlscope_task_with_rules("uniqueness")
     end
 
-    desc "Validate sitemap URLs with the links rule. ENV: BASE_URL, SITEMAP, JS=1"
+    desc "Validate URLs with the links rule. ENV: URL, SITEMAP, JS=1"
     task links: :environment do
       crawlscope_task_with_rules("links")
     end

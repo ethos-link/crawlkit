@@ -99,7 +99,7 @@ namespace :release do
 end
 
 namespace :crawlscope do
-  desc "Validate sitemap URLs with the default Crawlscope rules. ENV: BASE_URL, SITEMAP, RULES, JS=1, TIMEOUT, NETWORK_IDLE_TIMEOUT, CONCURRENCY"
+  desc "Validate URLs with the default Crawlscope rules. ENV: URL, SITEMAP, RULES, JS=1, TIMEOUT, NETWORK_IDLE_TIMEOUT, CONCURRENCY"
   task :validate do
     status = Crawlscope::Cli.start(["validate"], out: $stdout, err: $stderr)
     exit(status) unless status.zero?
@@ -112,7 +112,7 @@ namespace :crawlscope do
       exit(status) unless status.zero?
     end
 
-    desc "Validate sitemap URLs with the metadata rule. ENV: BASE_URL, SITEMAP, JS=1"
+    desc "Validate URLs with the metadata rule. ENV: URL, SITEMAP, JS=1"
     task :metadata do
       original_rules = ENV["RULES"]
       ENV["RULES"] = "metadata"
@@ -122,7 +122,7 @@ namespace :crawlscope do
       ENV["RULES"] = original_rules
     end
 
-    desc "Validate sitemap URLs with the structured_data rule. ENV: BASE_URL, SITEMAP, JS=1"
+    desc "Validate URLs with the structured_data rule. ENV: URL, SITEMAP, JS=1"
     task :structured_data do
       original_rules = ENV["RULES"]
       ENV["RULES"] = "structured_data"
@@ -132,7 +132,7 @@ namespace :crawlscope do
       ENV["RULES"] = original_rules
     end
 
-    desc "Validate sitemap URLs with the uniqueness rule. ENV: BASE_URL, SITEMAP, JS=1"
+    desc "Validate URLs with the uniqueness rule. ENV: URL, SITEMAP, JS=1"
     task :uniqueness do
       original_rules = ENV["RULES"]
       ENV["RULES"] = "uniqueness"
@@ -142,7 +142,7 @@ namespace :crawlscope do
       ENV["RULES"] = original_rules
     end
 
-    desc "Validate sitemap URLs with the links rule. ENV: BASE_URL, SITEMAP, JS=1"
+    desc "Validate URLs with the links rule. ENV: URL, SITEMAP, JS=1"
     task :links do
       original_rules = ENV["RULES"]
       ENV["RULES"] = "links"

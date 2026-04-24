@@ -2,6 +2,8 @@
 
 require "json-schema"
 
+JSON::Validator.use_multi_json = false
+
 module Crawlscope
   class SchemaRegistry
     def initialize(schemas: {})

@@ -17,8 +17,7 @@ module Crawlscope
     end
 
     def call
-      urls = Sitemap.new(path: @sitemap_path).urls(base_url: @base_url)
-      raise ValidationError, "No URLs found in sitemap: #{@sitemap_path}" if urls.empty?
+      urls = sitemap_urls
 
       @page_fetcher = page
       pages = Crawler.new(page_fetcher: @page_fetcher, concurrency: @concurrency).call(urls)
@@ -40,6 +39,13 @@ module Crawlscope
     end
 
     private
+
+    def sitemap_urls
+      urls = Sitemap.new(path: @sitemap_path).urls(base_url: @base_url)
+      raise ValidationError, "No URLs found in sitemap: #{@sitemap_path}" if urls.empty?
+
+      urls
+    end
 
     def browser
       Browser.new(
