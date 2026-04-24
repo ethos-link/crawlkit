@@ -4,9 +4,9 @@ require "test_helper"
 
 class CrawlscopeStructuredDataReportTest < Minitest::Test
   def test_results_maps_validation_errors_and_skips
-    result = Crawlscope::StructuredData::Audit::Result.new(
+    result = Crawlscope::StructuredData::Audit::Outcome.new(
       entries: [
-        Crawlscope::StructuredData::Audit::Entry.new(
+        Crawlscope::StructuredData::Audit::Page.new(
           url: "https://example.com/article",
           status: 200,
           structured_items: [{source: "json-ld", data: {"@type" => "Article"}}],
@@ -15,7 +15,7 @@ class CrawlscopeStructuredDataReportTest < Minitest::Test
           content_type: "text/html",
           skipped_reason: nil
         ),
-        Crawlscope::StructuredData::Audit::Entry.new(
+        Crawlscope::StructuredData::Audit::Page.new(
           url: "https://example.com/feed.xml",
           status: 200,
           structured_items: [],

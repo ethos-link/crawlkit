@@ -58,16 +58,16 @@ gem "ferrum"
 
 ## CLI Usage
 
-Validate a site directly from the gem:
+Validate a site from its default sitemap:
 
 ```bash
-crawlscope validate --base-url https://example.com
+crawlscope validate --url https://example.com
 ```
 
 Validate only specific rules:
 
 ```bash
-crawlscope validate --base-url https://example.com --rules metadata,links
+crawlscope validate --url https://example.com --rules metadata,links
 ```
 
 Validate structured data on one or more URLs:
@@ -77,10 +77,11 @@ crawlscope ldjson --url https://example.com/article
 crawlscope ldjson --url https://example.com/a --url https://example.com/b --summary
 ```
 
-If you do not pass `--sitemap`, `crawlscope` defaults to:
+To use a non-default sitemap, pass `--sitemap`:
 
-- `https://example.com/sitemap.xml` for real site URLs
-- `public/sitemap.xml` for localhost-style development URLs when that file exists
+```bash
+crawlscope validate --url https://example.com --sitemap https://example.com/sitemap.xml
+```
 
 Child sitemap indexes are supported automatically.
 
@@ -89,14 +90,14 @@ Child sitemap indexes are supported automatically.
 ```ruby
 require "crawlscope"
 
-audit = Crawlscope::Audit.new(
+crawl = Crawlscope::Crawl.new(
   base_url: "https://example.com",
   sitemap_path: "https://example.com/sitemap.xml",
   rules: Crawlscope::RuleRegistry.default(site_name: "Example").rules,
   schema_registry: Crawlscope::SchemaRegistry.default
 )
 
-result = audit.call
+result = crawl.call
 
 puts result.ok?
 puts result.issues.to_a.map(&:message)
@@ -104,7 +105,7 @@ puts result.issues.to_a.map(&:message)
 
 ## Result Shape
 
-`Crawlscope::Audit` returns a `Crawlscope::Result` with:
+`Crawlscope::Crawl` returns a `Crawlscope::Result` with:
 
 - `urls`: sitemap URLs selected for validation
 - `pages`: fetched page snapshots
@@ -133,7 +134,7 @@ bin/rails crawlscope:validate
 
 Available environment overrides:
 
-- `BASE_URL`
+- `URL`
 - `SITEMAP`
 - `RULES=metadata,links`
 - `JS=1` or `RENDERER=browser`
@@ -155,10 +156,14 @@ bin/rails crawlscope:validate:ldjson URL=https://example.com/article
 The same validation surface is also available in the gem repository itself through plain `rake`:
 
 ```bash
-bundle exec rake crawlscope:validate BASE_URL=https://example.com
-bundle exec rake crawlscope:validate:metadata BASE_URL=https://example.com
+bundle exec rake crawlscope:validate URL=https://example.com
+bundle exec rake crawlscope:validate:metadata URL=https://example.com
 bundle exec rake crawlscope:validate:ldjson URL=https://example.com/article
 ```
+
+`crawlscope:validate` runs all default sitemap rules: metadata, structured data, uniqueness, and links. `URL` is the site base. Without `SITEMAP`, Crawlscope uses `/sitemap.xml`. With `SITEMAP`, Crawlscope uses `URL` as the site base and validates URLs from that sitemap. `SITEMAP` may be a full URL or a local file path.
+
+`crawlscope:validate:ldjson` is separate because it directly checks the URL or semicolon-separated URLs in `URL`; it does not crawl the sitemap.
 
 ### Structured Data URL Audit
 
@@ -174,7 +179,7 @@ Optional flags:
 
 - `DEBUG=1`: print detected items
 - `SUMMARY=1`: print grouped failures
-- `REPORT_PATH=...`: write a JSON report
+- `REPORT_PATH=...`: write a JSON report. Treat this as trusted operator input; Crawlscope writes to the path the task process can access.
 - `JS=1` or `RENDERER=browser`: render with Ferrum
 
 ## Rules
@@ -236,6 +241,8 @@ Checks:
 - `SoftwareApplication`
 - `WebApplication`
 - `WebSite`
+
+The default schema definitions live in `Crawlscope::Schemas`; `Crawlscope::SchemaRegistry` owns registration and validation.
 
 Host apps can replace or extend the registry:
 

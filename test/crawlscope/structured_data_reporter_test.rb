@@ -5,9 +5,9 @@ require "test_helper"
 
 class CrawlscopeStructuredDataReporterTest < Minitest::Test
   def test_reports_failures_and_report_path
-    result = Crawlscope::StructuredData::Audit::Result.new(
+    result = Crawlscope::StructuredData::Audit::Outcome.new(
       entries: [
-        Crawlscope::StructuredData::Audit::Entry.new(
+        Crawlscope::StructuredData::Audit::Page.new(
           url: "https://example.com/article",
           status: 200,
           structured_items: [{source: "json-ld", data: {"@type" => "Article"}}],

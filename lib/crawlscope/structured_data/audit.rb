@@ -3,7 +3,7 @@
 module Crawlscope
   module StructuredData
     class Audit
-      Entry = Data.define(:url, :status, :structured_items, :errors, :fetch_error, :content_type, :skipped_reason) do
+      Page = Data.define(:url, :status, :structured_items, :errors, :fetch_error, :content_type, :skipped_reason) do
         def json_ld_count
           structured_items.count { |item| item[:source] == "json-ld" }
         end
@@ -21,7 +21,7 @@ module Crawlscope
         end
       end
 
-      Result = Data.define(:entries) do
+      Outcome = Data.define(:entries) do
         def ok?
           entries.all?(&:ok?)
         end
@@ -40,7 +40,7 @@ module Crawlscope
         fetcher = build_fetcher(urls)
         entries = urls.map { |url| validate_url(url, fetcher) }
 
-        Result.new(entries: entries)
+        Outcome.new(entries: entries)
       ensure
         fetcher&.close
       end
@@ -111,9 +111,9 @@ module Crawlscope
         content_type = page.headers["content-type"].to_s
 
         if page.error
-          Entry.new(url: url, status: page.status, structured_items: [], errors: [], fetch_error: page.error, content_type: content_type, skipped_reason: nil)
+          Page.new(url: url, status: page.status, structured_items: [], errors: [], fetch_error: page.error, content_type: content_type, skipped_reason: nil)
         elsif page.status && !(200..299).cover?(page.status.to_i)
-          Entry.new(
+          Page.new(
             url: url,
             status: page.status,
             structured_items: [],
@@ -123,7 +123,7 @@ module Crawlscope
             skipped_reason: nil
           )
         elsif !content_type.empty? && !content_type.include?("text/html")
-          Entry.new(
+          Page.new(
             url: url,
             status: page.status,
             structured_items: [],
@@ -134,7 +134,7 @@ module Crawlscope
           )
         else
           structured_items, errors = build_validation_errors(page)
-          Entry.new(
+          Page.new(
             url: url,
             status: page.status,
             structured_items: structured_items,

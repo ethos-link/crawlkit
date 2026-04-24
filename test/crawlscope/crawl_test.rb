@@ -2,7 +2,7 @@
 
 require "test_helper"
 
-class CrawlscopeAuditTest < Minitest::Test
+class CrawlscopeCrawlTest < Minitest::Test
   def setup
     @tmp_dir = Dir.mktmpdir
     @sitemap_path = File.join(@tmp_dir, "sitemap.xml")
@@ -33,6 +33,9 @@ class CrawlscopeAuditTest < Minitest::Test
               <title>Pricing</title>
               <meta name="description" content="Plans for hotels and restaurants">
               <link rel="canonical" href="https://example.com/pricing">
+              <script type="application/ld+json">
+                {"@context":"https://schema.org","@type":"WebSite","name":"Example","url":"https://example.com"}
+              </script>
             </head>
             <body>
               <main>
@@ -43,7 +46,7 @@ class CrawlscopeAuditTest < Minitest::Test
         HTML
       )
 
-    result = Crawlscope::Audit.new(
+    result = Crawlscope::Crawl.new(
       base_url: "https://example.com",
       sitemap_path: @sitemap_path,
       rules: Crawlscope::RuleRegistry.default(site_name: "Example").rules,
@@ -84,7 +87,7 @@ class CrawlscopeAuditTest < Minitest::Test
         HTML
       )
 
-    result = Crawlscope::Audit.new(
+    result = Crawlscope::Crawl.new(
       base_url: "https://example.com",
       sitemap_path: @sitemap_path,
       rules: Crawlscope::RuleRegistry.default(site_name: "Example").rules,
@@ -92,7 +95,7 @@ class CrawlscopeAuditTest < Minitest::Test
     ).call
 
     refute result.ok?
-    assert_equal %i[meta_description_too_long missing_canonical missing_h1 title_repeats_site_name].sort, result.issues.to_a.map(&:code).uniq.sort
+    assert_equal %i[meta_description_too_long missing_canonical missing_h1 missing_structured_data title_repeats_site_name].sort, result.issues.to_a.map(&:code).uniq.sort
   end
 
   def test_uses_browser_when_renderer_is_browser
@@ -127,6 +130,9 @@ class CrawlscopeAuditTest < Minitest::Test
               <title>Pricing</title>
               <meta name="description" content="Plans for hotels and restaurants">
               <link rel="canonical" href="https://example.com/pricing">
+              <script type="application/ld+json">
+                {"@context":"https://schema.org","@type":"WebSite","name":"Example","url":"https://example.com"}
+              </script>
             </head>
             <body>
               <main>
@@ -149,7 +155,7 @@ class CrawlscopeAuditTest < Minitest::Test
       end
     end.new
 
-    result = Crawlscope::Audit.new(
+    result = Crawlscope::Crawl.new(
       base_url: "https://example.com",
       sitemap_path: @sitemap_path,
       rules: Crawlscope::RuleRegistry.default(site_name: "Example").rules,

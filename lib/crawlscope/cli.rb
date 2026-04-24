@@ -37,7 +37,7 @@ module Crawlscope
         @err.puts(general_usage)
         1
       end
-    rescue OptionParser::InvalidOption, OptionParser::MissingArgument, ConfigurationError, ArgumentError => error
+    rescue OptionParser::InvalidOption, OptionParser::MissingArgument, ConfigurationError, ValidationError, ArgumentError => error
       @err.puts(error.message)
       @err.puts("")
       @err.puts(general_usage)
@@ -49,12 +49,12 @@ module Crawlscope
     def general_usage
       <<~TEXT
         Usage:
-          crawlscope validate --base-url https://example.com [options]
+          crawlscope validate --url https://example.com [options]
           crawlscope ldjson --url https://example.com/page [options]
           crawlscope version
 
         Commands:
-          validate    Audit sitemap URLs for metadata, structured data, uniqueness, and links
+          validate    Audit URLs for metadata, structured data, uniqueness, and links
           ldjson      Validate structured data on one or more URLs
           version     Print the gem version
       TEXT
@@ -109,7 +109,7 @@ module Crawlscope
 
       configure_renderer(options[:renderer])
 
-      result = task.validate_ldjson(
+      result = task.validate_json_ld(
         urls: urls,
         debug: options[:debug],
         renderer: options[:renderer],
@@ -123,7 +123,7 @@ module Crawlscope
 
     def run_validate
       options = {
-        base_url: normalized_string(ENV["BASE_URL"]),
+        url: normalized_string(ENV["URL"]),
         rule_names: normalized_string(ENV["RULES"]),
         sitemap_path: normalized_string(ENV["SITEMAP"])
       }
@@ -134,10 +134,10 @@ module Crawlscope
       @configuration.timeout_seconds = resolved_integer("TIMEOUT", default: @configuration.timeout_seconds, minimum: 1)
 
       parser = OptionParser.new do |opts|
-        opts.banner = "Usage: crawlscope validate --base-url https://example.com [options]"
+        opts.banner = "Usage: crawlscope validate --url https://example.com [options]"
 
-        opts.on("--base-url URL", "Set the site base URL") do |value|
-          options[:base_url] = value
+        opts.on("--url URL", "Set the site URL") do |value|
+          options[:url] = value
         end
 
         opts.on("--sitemap PATH_OR_URL", "Set the sitemap path or URL") do |value|
@@ -168,7 +168,7 @@ module Crawlscope
       parser.parse!(@argv)
 
       result = task.validate(
-        base_url: options[:base_url],
+        base_url: options[:url],
         sitemap_path: options[:sitemap_path],
         rule_names: options[:rule_names]
       )
@@ -239,7 +239,7 @@ module Crawlscope
     end
 
     def task
-      @task ||= Task.new(configuration: @configuration, reporter: Reporter.new(io: @out))
+      @task ||= Run.new(configuration: @configuration, reporter: Reporter.new(io: @out))
     end
   end
 end
