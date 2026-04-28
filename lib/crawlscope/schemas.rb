@@ -330,6 +330,56 @@ module Crawlscope
       }
     }.freeze
 
+    JOB_POSTING = {
+      type: "object",
+      additionalProperties: true,
+      required: ["@type", "title", "description", "datePosted", "hiringOrganization"],
+      properties: {
+        "@context" => {enum: ["https://schema.org", "https://schema.org/"]},
+        "@type" => {const: "JobPosting"},
+        :title => {type: "string"},
+        :description => {type: "string"},
+        :identifier => {type: "object"},
+        :datePosted => {type: "string"},
+        :validThrough => {type: "string"},
+        :employmentType => {
+          anyOf: [
+            {type: "string"},
+            {type: "array", minItems: 1, items: {type: "string"}}
+          ]
+        },
+        :directApply => {type: "boolean"},
+        :hiringOrganization => {
+          type: "object",
+          required: ["@type", "name"],
+          properties: {
+            "@type" => {const: "Organization"},
+            :name => {type: "string"},
+            :sameAs => {type: "string", format: "uri"},
+            :logo => {type: "string", format: "uri"}
+          }
+        },
+        :applicantLocationRequirements => {
+          anyOf: [
+            {type: "object"},
+            {type: "array", minItems: 1, items: {type: "object"}}
+          ]
+        },
+        :jobLocationType => {type: "string"},
+        :jobLocation => {
+          anyOf: [
+            {type: "object"},
+            {type: "array", minItems: 1, items: {type: "object"}}
+          ]
+        },
+        :baseSalary => {type: "object"}
+      },
+      anyOf: [
+        {required: ["jobLocation"]},
+        {required: ["jobLocationType", "applicantLocationRequirements"]}
+      ]
+    }.freeze
+
     def self.schemas
       {
         "FAQPage" => FAQ_PAGE,
@@ -348,7 +398,8 @@ module Crawlscope
         "Recipe" => RECIPE,
         "Event" => EVENT,
         "VideoObject" => VIDEO_OBJECT,
-        "WebPage" => WEB_PAGE
+        "WebPage" => WEB_PAGE,
+        "JobPosting" => JOB_POSTING
       }
     end
   end
