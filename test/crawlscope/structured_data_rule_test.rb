@@ -79,6 +79,97 @@ class CrawlscopeStructuredDataRuleTest < Minitest::Test
     assert_equal ["json-ld", "microdata"], issues.to_a.first.details[:expected_sources]
   end
 
+  def test_validates_job_posting_markup
+    issues = Crawlscope::IssueCollection.new
+    rule = Crawlscope::Rules::StructuredData.new
+    page = page(
+      url: "https://example.com/careers/sales-partner",
+      body: <<~HTML
+        <html>
+          <head>
+            <script type="application/ld+json">
+              {
+                "@context":"https://schema.org/",
+                "@type":"JobPosting",
+                "title":"Sales Partner",
+                "description":"A real role description.",
+                "datePosted":"2026-04-28",
+                "hiringOrganization":{"@type":"Organization","name":"Example","sameAs":"https://example.com/","logo":"https://example.com/icon.png"},
+                "jobLocationType":"TELECOMMUTE",
+                "applicantLocationRequirements":[{"@type":"Country","name":"South Africa"}]
+              }
+            </script>
+          </head>
+          <body><h1>Sales Partner</h1></body>
+        </html>
+      HTML
+    )
+
+    rule.call(
+      urls: [page.url],
+      pages: [page],
+      issues: issues,
+      context: {schema_registry: Crawlscope::SchemaRegistry.default}
+    )
+
+    assert_empty issues.to_a
+  end
+
+  def test_reports_schema_errors_for_invalid_job_posting_markup
+    issues = Crawlscope::IssueCollection.new
+    rule = Crawlscope::Rules::StructuredData.new
+    page = page(
+      url: "https://example.com/careers/sales-partner",
+      body: <<~HTML
+        <html>
+          <head>
+            <script type="application/ld+json">
+              {"@context":"https://schema.org","@type":"JobPosting","title":"Sales Partner"}
+            </script>
+          </head>
+          <body><h1>Sales Partner</h1></body>
+        </html>
+      HTML
+    )
+
+    rule.call(
+      urls: [page.url],
+      pages: [page],
+      issues: issues,
+      context: {schema_registry: Crawlscope::SchemaRegistry.default}
+    )
+
+    assert_equal [:structured_data_schema_error], issues.to_a.map(&:code)
+    assert_includes issues.to_a.first.message, "description"
+  end
+
+  def test_reports_missing_job_posting_for_career_detail_pages
+    issues = Crawlscope::IssueCollection.new
+    rule = Crawlscope::Rules::StructuredData.new
+    page = page(
+      url: "https://example.com/careers/sales-partner",
+      body: <<~HTML
+        <html>
+          <head>
+            <script type="application/ld+json">
+              {"@context":"https://schema.org","@type":"WebPage","name":"Sales Partner"}
+            </script>
+          </head>
+          <body><h1>Sales Partner</h1></body>
+        </html>
+      HTML
+    )
+
+    rule.call(
+      urls: [page.url],
+      pages: [page],
+      issues: issues,
+      context: {schema_registry: Crawlscope::SchemaRegistry.default}
+    )
+
+    assert_equal [:missing_job_posting], issues.to_a.map(&:code)
+  end
+
   private
 
   def page(url:, body:)
